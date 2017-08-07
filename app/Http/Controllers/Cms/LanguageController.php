@@ -3,26 +3,72 @@
 namespace App\Http\Controllers\Cms;
 
 use Illuminate\Http\Request,
+    App,
     App\Http\Requests,
     App\Http\Controllers\Controller,
     App\Language;
+use Locale;
 
 class LanguageController extends Controller
 {
+    /**
+     * @var \App\Services\Translation
+     */
+    private $translationService;
+
+    public function __construct(\App\Services\Translation $translationService){
+        $this->translationService = $translationService;
+
+        App::setLocale(app('request')->header('language'));
+    }
+
     public function index()
     {
         $languages = Language::all();
 
-        return response()->json($languages);
+        $this->translationService->translateLanguage($languages, App::getLocale());
+
+        return response()->success(compact('languages'));
     }
 
-    public function published()
+    public function defaultLanguage()
     {
-        $languages = Language::where('enabled', true)
+        $language = \App\Language::where('default_language', true)->first();
+        if (!$language) {
+            return response()->error('No default language found', 404);
+        }
+
+        $this->translationService->translateLanguage($language, App::getLocale());
+
+        return response()->json($language);
+    }
+
+    public function enabledIndex()
+    {
+        $enabled = \App\Language::where('enabled', true)
+            ->get();
+
+        $this->translationService->translateLanguage($enabled, App::getLocale());
+
+        return response()->success(compact('enabled'));
+    }
+
+    public function publishedIndex()
+    {
+        $published = \App\Language::where('enabled', true)
             ->where('published', true)
             ->get();
-        return response()->json($languages);
+
+        foreach ($published as $language) {
+            $language->translatedName = Locale::getDisplayLanguage($language->language, $language->language);
+        }
+
+        $this->translationService->translateLanguage($published, App::getLocale());
+
+        return response()->success(compact('published'));
     }
+
+
     public function update(Request $request, $id)
     {
         $this->validate($request, [

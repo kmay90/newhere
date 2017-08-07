@@ -10,10 +10,16 @@
         "tymon/jwt-auth": "0.5.*",
         "barryvdh/laravel-cors": "0.7.x",
         "laravelangular/generators": "2.4.x",
-        "dingo/api": "1.0.x@dev",
+        "dingo/api": "1.0.0-beta5@dev",
         "dimsav/laravel-translatable": "^5.5",
         "zizaco/entrust": "5.2.x-dev",
-        "webpatser/laravel-countries": "dev-master"
+        "webpatser/laravel-countries": "dev-master",
+        "orchestra/imagine": "3.2.x",
+        "snowfire/beautymail": "dev-master",
+        "caouecs/laravel-lang": "~3.0",
+        "guzzlehttp/guzzle": "^6.2",
+        "league/csv": "^8.0",
+        "xinax/laravel-gettext": "3.1.x"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
@@ -40,12 +46,12 @@
             "php -r \"copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [
-           "php -r \"unlink('code_of_conduct.md');\"",
-           "php -r \"unlink('CHANGELOG.md');\"",
-           "php -r \"unlink('.codeclimate.yml');\"",
-           "php -r \"unlink('.travis.yml');\"",
-           "php artisan key:generate",
-           "php artisan jwt:generate"
+            "php -r \"unlink('code_of_conduct.md');\"",
+            "php -r \"unlink('CHANGELOG.md');\"",
+            "php -r \"unlink('.codeclimate.yml');\"",
+            "php -r \"unlink('.travis.yml');\"",
+            "php artisan key:generate",
+            "php artisan jwt:generate"
         ],
         "post-install-cmd": [
             "php artisan clear-compiled",

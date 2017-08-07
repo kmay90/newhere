@@ -1,16 +1,21 @@
 export class LanguageService {
-    constructor(API, ToastService, $window, $filter) {
+    constructor(API, ToastService, $window, $filter, $translate) {
         'ngInject';
 
+        this.$translate = $translate;
         this.$filter = $filter;
         this.$window = $window;
         this._promise;
         this._callbacks = new Array();
         this.API = API;
         this.ToastService = ToastService;
+
         this.languages = [];
         this.activeLanguages = [];
+        this.publishedLanguages = [];
         this.selectedLanguage = '';
+        this.defaultLanguage;
+        this.enabledLanguages = [];
     }
 
     fetchAll(success, error, force) {
@@ -31,14 +36,43 @@ export class LanguageService {
             })
         }
     }
-    fetchPublished(doneFn) {
-        return this.API.all('languages/published').getList().then((list) => {
-            if (typeof doneFn == "function") {
-                doneFn();
-            }
-            return angular.copy(list, this.languages);
-        })
+    
+    fetchDefault(success, error, force) {
+        if (this.defaultLanguage && !force) {
+            success(this.defaultLanguage);
+            return;
+        }
+
+        this.API.all('languages').customGET('default').then((language) => {
+            this.defaultLanguage = language;
+            success(this.defaultLanguage);
+        });
     }
+
+    fetchEnabled(success, error, force) {
+        if (this.enabledLanguages.length > 0 && !force) {
+            success(this.enabledLanguages);
+            return;
+        }
+
+        this.API.all('languages').customGETLIST('enabled').then((list) => {
+            this.enabledLanguages = list;
+            success(this.enabledLanguages);
+        });
+    }
+
+    fetchPublished(success, error, force) {
+        if (this.publishedLanguages.length > 0 && !force) {
+            success(this.publishedLanguages);
+            return;
+        }
+
+        this.API.all('languages').customGETLIST('published').then((list) => {
+            this.publishedLanguages = list;
+            success(this.publishedLanguages);
+        });
+    }
+
     getActive(success) {
         this.fetchAll((languages) => {
             this.activeLanguages = this.$filter('filter')(languages, {
@@ -49,6 +83,7 @@ export class LanguageService {
     }
     changeLanguage(language, doneFn) {
         this.selectedLanguage = this.$window.localStorage.language = language;
+        this.$translate.use(language);
         if (typeof doneFn == "function") {
             doneFn();
         }
@@ -60,9 +95,12 @@ export class LanguageService {
         }
         return this.selectedLanguage;
     }
+
     update(language) {
         return language.save().then((response) => {
-            this.ToastService.show('Language updated.');
-        })
+            this.$translate('Sprache aktualisiert.').then((msg) => {
+                this.ToastService.show(msg);
+            });
+        });
     }
 }

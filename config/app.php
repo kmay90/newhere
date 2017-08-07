@@ -165,7 +165,12 @@ return [
 
         Dimsav\Translatable\TranslatableServiceProvider::class,
         Zizaco\Entrust\EntrustServiceProvider::class,
-        Webpatser\Countries\CountriesServiceProvider::class
+        Webpatser\Countries\CountriesServiceProvider::class,
+        //Matriphe\Imageupload\ImageuploadServiceProvider::class,
+        Orchestra\Imagine\ImagineServiceProvider::class,
+        Snowfire\Beautymail\BeautymailServiceProvider::class,
+
+        Xinax\LaravelGettext\LaravelGettextServiceProvider::class,
     ],
 
     /*
@@ -214,7 +219,7 @@ return [
         'JWTAuth'   => Tymon\JWTAuth\Facades\JWTAuth::class,
         'Entrust'   => Zizaco\Entrust\EntrustFacade::class,
         'Countries' => Webpatser\Countries\CountriesFacade::class,
-
+        'Imagine' => Orchestra\Imagine\Facade::class,
     ],
 
 ];

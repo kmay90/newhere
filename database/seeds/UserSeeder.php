@@ -19,14 +19,16 @@ class UserSeeder extends Seeder
         $user->email = "super@admin.at";
         $user->password = Hash::make('admin');
         $user->name = "Administrator";
+        $user->confirmed = 1;
         $user->save();
         $user->attachRole($superAdmin);
 
-        $organisation = Role::where('name', 'organisation')->firstOrFail();
+        $organisation = Role::where('name', 'organisation-admin')->firstOrFail();
         $ngo = new User;
         $ngo->email = "wwf@ngo.at";
         $ngo->password = Hash::make('ngouser');
         $ngo->name = "WWF";
+        $ngo->confirmed = 1;
         $ngo->save();
         $ngo->attachRole($organisation);
     }

@@ -1,11 +1,18 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Console\Command;
 
-use App\Offer, App\OfferTranslation;
+use App\Offer;
+use League\Csv\Reader;
+use App\Ngo;
+use App\Category;
+use App\Filter;
+use App\Logic\Address\AddressAPI;
 
 class OfferTableSeeder extends Seeder
 {
+
     /**
      * Run the database seeds.
      *
@@ -13,51 +20,125 @@ class OfferTableSeeder extends Seeder
      */
     public function run()
     {
-        $now = new \DateTime();
 
-        $past = clone $now;
-        $past->modify('-5days');
+        $reader = Reader::createFromPath(base_path().'/database/seeds/csvs/offers.csv');
+        $reader->setDelimiter(";");
+        $results = $reader->fetch();
 
-        $future = clone $now;
-        $future->modify('+30days');
+        $wrongCats = array();
+        $wrongFilters = array();
+        $wrongNgos = array();
+        $addressApi = new AddressAPI();
+        foreach ($results as $key => $row) {
+            $categories = array();
+            $filters = array();
+            $ngo = Ngo::where('short', $row[0])->first();
 
-        $offers = [
-                ['street' => 'Karlsplatz', 'streetnumber' => 1, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => null, 'age_to' => null, 'valid_from' => null, 'valid_until' => null, 'ngo_id' => 1],
-                ['street' => 'Karlsplatz', 'streetnumber' => 2, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => 18, 'age_to' => 99, 'valid_from' => null, 'valid_until' => null, 'ngo_id' => 1],
-                ['street' => 'Karlsplatz', 'streetnumber' => 3, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => null, 'age_to' => null, 'valid_from' => $now->format('Y-m-d'), 'valid_until' => $future->format('Y-m-d'), 'ngo_id' => 1],
-                ['street' => 'Karlsplatz', 'streetnumber' => 4, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => 18, 'age_to' => 99, 'valid_from' => $now->format('Y-m-d'), 'valid_until' => $future->format('Y-m-d'), 'ngo_id' => 1],
-                ['street' => 'Karlsplatz', 'streetnumber' => 5, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => null, 'age_to' => null, 'valid_from' => $past->format('Y-m-d'), 'valid_until' => $now->format('Y-m-d'), 'ngo_id' => 1],
-                ['street' => 'Karlsplatz', 'streetnumber' => 6, 'streetnumberadditional' => null, 'zip' => '1234', 'city' => 'Wien', 'phone' => '01/123456789', 'email' => 'foo@bar.com', 'age_from' => null, 'age_to' => null, 'valid_from' => $past->format('Y-m-d'), 'valid_until' => $future->format('Y-m-d'), 'ngo_id' => 1],
-            ];
-        Offer::insert($offers);
+            if(is_null($ngo)){
+              $ngo = Ngo::where('short', 'NONE')->first();
+                if(!in_array($row[0], $wrongNgos)){
+                  $wrongNgos[] = $row[0];
+                }
+            }
 
-        $offerTranslations = [
-                ['language_id' => 1, 'offer_id' => 1, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 2, 'offer_id' => 1, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 1, 'offer_id' => 2, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-        ];
-        OfferTranslation::insert($offerTranslations);
+            $offer = new Offer();
+            $offer->ngo_id = $ngo->id;
+            if(!empty($row[6]))
+                $offer->street = $row[6];
 
+            if(!empty($row[7]))
+                $offer->streetnumber = $row[7];
 
-        DB::table('offer_filters')->insert(
-            [
-                ['filter_id' => 1, 'offer_id' => 1],
-                ['filter_id' => 2, 'offer_id' => 1],
-                ['filter_id' => 5, 'offer_id' => 1],
-                ['filter_id' => 2, 'offer_id' => 2],
-            ]
-        );
+            if(!empty($row[10]))
+                $offer->zip = $row[10];
 
-        DB::table('offer_categories')->insert(
-            [
-                ['category_id' => 1, 'offer_id' => 1],
-                // ['category_id' => 3, 'offer_id' => 1],
-                // ['category_id' => 4, 'offer_id' => 2],
-                ['category_id' => 1, 'offer_id' => 3],
-                ['category_id' => 1, 'offer_id' => 4],
-                ['category_id' => 1, 'offer_id' => 5],
-                ['category_id' => 1, 'offer_id' => 6],
-            ]
-        );
+            if(!empty($row[11]))
+                $offer->city = $row[11];
+
+            if(!empty($row[19]))
+              $offer->phone = $row[19];
+            if(!empty($row[17]))
+              $offer->email = $row[17];
+            if(!empty($row[18]))
+              $offer->website = $row[18];
+
+            if($offer->street != NULL && $offer->streetnumber != NULL && $offer->zip != NULL){
+              $coordinates = $addressApi->getCoordinates($offer->street, $offer->streetnumber, $offer->zip);
+              $offer->latitude = $coordinates[0];
+              $offer->longitude = $coordinates[1];
+            }
+            if(!empty($row[18]))
+              $offer->website = $row[18];
+            $offer->enabled = true;
+            $offer->save();
+
+            if(!empty($row[4])) $offer->translateOrNew('de')->title = $row[4];
+            if(!empty($row[5])) $offer->translateOrNew('de')->description = $row[5];
+            if(!empty($row[15])) $offer->translateOrNew('de')->opening_hours = $row[15];
+            if(!empty($row[22])) $offer->translateOrNew('en')->title = $row[22];
+            if(!empty($row[23])) $offer->translateOrNew('en')->description = $row[23];
+            if(!empty($row[25])) $offer->translateOrNew('fa')->title = $row[25];
+            if(!empty($row[26])) $offer->translateOrNew('fa')->description = $row[26];
+            if(!empty($row[28])) $offer->translateOrNew('ar')->title = $row[28];
+            if(!empty($row[29])) $offer->translateOrNew('ar')->description = $row[29];
+            if(!empty($row[31])) $offer->translateOrNew('fr')->title = $row[31];
+            if(!empty($row[31])) $offer->translateOrNew('fr')->description = $row[32];
+
+            $offer->save();
+
+            // Adding Categories
+            if(!empty($row[1])){
+              $categories = explode(',', $row[1]);
+            }
+
+            if(count($categories)){
+              foreach($categories as $cat){
+                $category = Category::where('slug', str_slug($cat,'-'))->first();
+                 if(!$category){
+                    if(!in_array(trim($cat), $wrongCats)){
+                      $wrongCats[] = trim($cat);
+                    }
+                }
+                $offer->categories()->attach($category);
+              }
+            }
+
+            // Adding Filters
+            if(!empty($row[3])){
+              $filters = explode(',', $row[3]);
+            }
+
+            if(count($filters)){
+              foreach($filters as $f){
+                $filter = Filter::whereTranslation('title', trim($f))->first();
+                 if(!$filter){
+                    if(!in_array(trim($f), $wrongFilters)){
+                      $wrongFilters[] = trim($f);
+                    }
+                }
+                $offer->filters()->attach($filter);
+              }
+            }
+
+        }
+
+        //Console Output: Missing Ngos
+        $this->command->info('Missing Ngos:');
+        foreach ($wrongNgos as $key => $ngo) {
+          $this->command->error($ngo);
+        }
+
+        //Console Output: Missing Categories
+        $this->command->info('Missing Categories:');
+        foreach ($wrongCats as $key => $cat) {
+          $this->command->error($cat);
+        }
+
+        //Console Output: Missing Filters
+        $this->command->info('Missing Filters:');
+        foreach ($wrongFilters as $key => $filter) {
+          $this->command->error($filter);
+        }
+
     }
 }

@@ -19,8 +19,6 @@ class CmsCategoryFormController{
           translations:[]
         };
 
-
-
         if($stateParams.id != 'new'){
           this.CategoryService.one($stateParams.id, (category) =>{
             this.category = category;
@@ -35,6 +33,7 @@ class CmsCategoryFormController{
             this.activeTransTab = key;
           }
       });
+        
       if(!exists){
         this.category.translations.push({
           title:'',
@@ -42,10 +41,22 @@ class CmsCategoryFormController{
           locale: language
         });
       }
-
+    }
+    i18nTitle(locale){
+      var title;
+      angular.forEach(this.languages, (lang) => {
+        if(lang.language == locale)
+          title = lang.i18n;
+      });
+        
+      return title;
     }
     save() {
       this.CategoryService.save(this.category);
+    }
+
+    cancel() {
+        this.CategoryService.cancel()
     }
 }
 

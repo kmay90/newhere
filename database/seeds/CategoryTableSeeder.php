@@ -2,75 +2,219 @@
 
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
-
 use App\Category;
+use App\Image;
+use League\Csv\Reader;
 
 class CategoryTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
+
+
     public function run()
     {
-        // $data = [
-        //         ['parent_id' => null, 'icon' => 'star' , 'de' => ['title' => 'Lorem ipsum']],
-        //         ['parent_id' => null, 'icon' => 'house' , 'de' => ['title' => 'Lorem ipsum']],
-        //         ['parent_id' => null, 'icon' => 'doctor', 'de' => ['title' => 'Lorem ipsum']],
-        //         ['parent_id' => 1, 'icon' => 'star1', 'de' => ['title' => 'Lorem ipsum']],
-        //     ];
-        //
-        // Category::insert($data);
+        $german = Reader::createFromPath(base_path() . '/database/seeds/csvs/categories_german.csv');
+        $english = Reader::createFromPath(base_path() . '/database/seeds/csvs/categories_english.csv');
+        $french = Reader::createFromPath(base_path() . '/database/seeds/csvs/categories_french.csv');
+        $arabic = Reader::createFromPath(base_path() . '/database/seeds/csvs/categories_arabic.csv');
+        $farsi = Reader::createFromPath(base_path() . '/database/seeds/csvs/categories_farsi.csv');
 
-        $category = new Category();
-        $category->icon = 'star';
-        $category->save();
-
-        $category->translateOrNew('de')->title = "Deutsch Parent";
-        $category->translateOrNew('de')->description = "Testscription";
-        $category->translateOrNew('en')->title = "English Parent";
-        $category->translateOrNew('en')->description = "Testscription English";
-
-        $category->save();
-
-        $category2 = new Category();
-        $category2->icon = 'house';
-        $category2->parent_id = $category->id;
-        $category2->save();
-
-        $category2->translateOrNew('de')->title = "Deutsch Child";
-        $category2->translateOrNew('de')->description = "Testscription";
-        $category2->translateOrNew('en')->title = "English Child";
-        $category2->translateOrNew('en')->description = "Testscription English";
-
-        $category2->save();
-
-        $category3 = new Category();
-        $category3->icon = 'house';
-        $category3->save();
-
-        $category3->translateOrNew('de')->title = "Deutsch Next";
-        $category3->translateOrNew('de')->description = "Testscription";
-
-        $category3->save();
+        $german->setDelimiter(";");
+        $english->setDelimiter(";");
+        $french->setDelimiter(";");
+        $farsi->setDelimiter(";");
+        $arabic->setDelimiter(";");
 
 
+        $englishResults = $english->fetch();
 
-        /*DB::table('category_translations')->insert(
-            [
-                ['language_id' => 1, 'category_id' => 1, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 2, 'category_id' => 1, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
+        $parent = new Category;
+        $sub1 = new Category;
+        $sub2 = new Category;
 
-                ['language_id' => 1, 'category_id' => 2, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 2, 'category_id' => 2, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
+        $sortIndex = [0, 0, 0];
 
-                ['language_id' => 1, 'category_id' => 3, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 2, 'category_id' => 3, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
+        foreach ($englishResults as $key => $row) {
+            $germanTrans = $german->fetchOne($key);
 
-                ['language_id' => 1, 'category_id' => 4, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-                ['language_id' => 2, 'category_id' => 4, 'title' => 'Lorem ipsum', 'description' => 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. '],
-            ]
-        );*/
+            // Farsi translation not working cause of conflict in table data 50/51
+            $farsiTrans = $farsi->fetchOne($key);
+            $frenchTrans = $french->fetchOne($key);
+            $arabicTrans = $arabic->fetchOne($key);
+
+            if (!empty($row[0])) {
+                $sortIndex[1] = $sortIndex[2] = 0;
+                $image = Image::where('basename', 'like', '%'.$germanTrans[0]."%" )->first();
+
+                $parent = new Category;
+
+                $parent->slug = str_slug($row[0]);
+
+                if($image){
+                  $parent->image_id = $image->id;
+                }
+                $parent->save();
+
+                $parent->translateOrNew('en')->title = $row[0];
+                $parent->translateOrNew('en')->description = $row[1];
+
+
+                $parent->translateOrNew('de')->title = $germanTrans[0];
+                $parent->translateOrNew('de')->description = $germanTrans[1];
+
+                $parent->translateOrNew('fa')->title = $farsiTrans[0];
+                $parent->translateOrNew('fa')->description = $farsiTrans[1];
+
+                $parent->translateOrNew('fr')->title = $frenchTrans[0];
+                $parent->translateOrNew('fr')->description = $frenchTrans[1];
+
+                $parent->translateOrNew('ar')->title = $arabicTrans[0];
+                $parent->translateOrNew('ar')->description = $arabicTrans[1];
+
+                $parent->sortindex = $sortIndex[0];
+                $sortIndex[0]++;
+
+                $parent->save();
+
+                if (!empty($row[2])) {
+                    $sub1 = new Category;
+                    //$sub1->icon = "none";
+                    $sub1->parent_id = $parent->id;
+                    $sub1->slug = str_slug($row[2]);
+                    $sub1->sortindex = $sortIndex[1];
+                    $sub1->save();
+
+                    $sortIndex[1]++;
+
+                    $sub1->translateOrNew('en')->title = $row[2];
+                    $sub1->translateOrNew('en')->description = $row[3];
+
+                    $sub1->translateOrNew('de')->title = $germanTrans[2];
+                    $sub1->translateOrNew('de')->description = $germanTrans[3];
+
+                    // Farsi translation not working cause of conflict in table data 50/51
+                    $sub1->translateOrNew('fa')->title = $farsiTrans[2];
+                    $sub1->translateOrNew('fa')->description = $farsiTrans[3];
+
+                    $sub1->translateOrNew('fr')->title = $frenchTrans[2];
+                    $sub1->translateOrNew('fr')->description = $frenchTrans[3];
+
+                    $sub1->translateOrNew('ar')->title = $arabicTrans[2];
+                    $sub1->translateOrNew('ar')->description = $arabicTrans[3];
+
+                    $sub1->save();
+                    if (!empty($row[4])) {
+                        $sub2 = new Category;
+                        //$sub2->icon = "none";
+                        $sub2->parent_id = $sub1->id;
+                        $sub2->slug = str_slug($row[4]);
+                        $sub2->sortindex = $sortIndex[2];
+                        $sub2->save();
+
+                        $sortIndex[2]++;
+
+                        $sub2->translateOrNew('en')->title = $row[4];
+                        $sub2->translateOrNew('en')->description = $row[5];
+
+                        $sub2->translateOrNew('de')->title = $germanTrans[4];
+                        $sub2->translateOrNew('de')->description = $germanTrans[5];
+
+                        // Farsi translation not working cause of conflict in table data 50/51
+                        $sub2->translateOrNew('fa')->title = $farsiTrans[4];
+                        $sub2->translateOrNew('fa')->description = $farsiTrans[5];
+
+                        $sub2->translateOrNew('fr')->title = $frenchTrans[4];
+                        $sub2->translateOrNew('fr')->description = $frenchTrans[5];
+
+                        $sub2->translateOrNew('ar')->title = $arabicTrans[4];
+                        $sub2->translateOrNew('ar')->description = $arabicTrans[5];
+
+                        $sub2->save();
+                    }
+                }
+            } elseif (!empty($row[2])) {
+                $sub1 = new Category;
+                $sub1->parent_id = $parent->id;
+                $sub1->slug = str_slug($row[2]);
+                $sub1->sortindex = $sortIndex[1];
+                $sub1->save();
+
+                $sortIndex[1]++;
+
+                $sub1->translateOrNew('en')->title = $row[2];
+                $sub1->translateOrNew('en')->description = $row[3];
+
+                $sub1->translateOrNew('de')->title = $germanTrans[2];
+                $sub1->translateOrNew('de')->description = $germanTrans[3];
+
+                // Farsi translation not working cause of conflict in table data 50/51
+                $sub1->translateOrNew('fa')->title = $farsiTrans[2];
+                $sub1->translateOrNew('fa')->description = $farsiTrans[3];
+
+                $sub1->translateOrNew('fr')->title = $frenchTrans[2];
+                $sub1->translateOrNew('fr')->description = $frenchTrans[3];
+
+                $sub1->translateOrNew('ar')->title = $arabicTrans[2];
+                $sub1->translateOrNew('ar')->description = $arabicTrans[3];
+
+                $sub1->save();
+
+                if (!empty($row[4])) {
+                    $sub2 = new Category;
+                    //$sub2->icon = "none";
+                    $sub2->parent_id = $sub1->id;
+                    $sub2->slug = str_slug($row[4]);
+                    $sub2->sortindex = $sortIndex[2];
+                    $sub2->save();
+
+                    $sortIndex[2]++;
+
+                    $sub2->translateOrNew('en')->title = $row[4];
+                    $sub2->translateOrNew('en')->description = $row[5];
+
+                    $sub2->translateOrNew('de')->title = $germanTrans[4];
+                    $sub2->translateOrNew('de')->description = $germanTrans[5];
+
+                    // Farsi translation not working cause of conflict in table data 50/51
+                    $sub2->translateOrNew('fa')->title = $farsiTrans[4];
+                    $sub2->translateOrNew('fa')->description = $farsiTrans[5];
+
+
+                    $sub2->translateOrNew('fr')->title = $frenchTrans[4];
+                    $sub2->translateOrNew('fr')->description = $frenchTrans[5];
+
+                    $sub2->translateOrNew('ar')->title = $arabicTrans[4];
+                    $sub2->translateOrNew('ar')->description = $arabicTrans[5];
+
+                    $sub2->save();
+                }
+            } elseif (!empty($row[4])) {
+                $sub2 = new Category;
+                $sub2->parent_id = $sub1->id;
+                $sub2->slug = str_slug($row[4]);
+                $sub2->sortindex = $sortIndex[2];
+                $sub2->save();
+
+                $sortIndex[2]++;
+
+                $sub2->translateOrNew('en')->title = $row[4];
+                $sub2->translateOrNew('en')->description = $row[5];
+
+                $sub2->translateOrNew('de')->title = $germanTrans[4];
+                $sub2->translateOrNew('de')->description = $germanTrans[5];
+
+                // Farsi translation not working cause of conflict in table data 50/51
+                $sub2->translateOrNew('fa')->title = $farsiTrans[4];
+                $sub2->translateOrNew('fa')->description = $farsiTrans[5];
+
+                $sub2->translateOrNew('fr')->title = $frenchTrans[4];
+                $sub2->translateOrNew('fr')->description = $frenchTrans[5];
+
+                $sub2->translateOrNew('ar')->title = $arabicTrans[4];
+                $sub2->translateOrNew('ar')->description = $arabicTrans[5];
+
+                $sub2->save();
+              }
+
+        }
     }
 }

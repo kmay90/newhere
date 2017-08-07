@@ -24,6 +24,31 @@ export class APIService {
 						headers.Authorization = 'Bearer ' + token;
 					}
 					headers.Language = $window.localStorage.language || 'de';
+				})
+				.addResponseInterceptor(function(data, operation, what, url){
+						var extractedData;
+
+           if (operation === "getList") {
+						 var type = what;
+						 if(type == 'search'){
+							  type = url.substring(5, url.indexOf('/search',5));
+						 }
+						 else if(type.indexOf('?') > -1){
+							 type = what.substring(0, what.indexOf('?'));
+						 }
+						 	console.log(type, what, url)
+             extractedData = data.data[type];
+						 if(data.data['count']){
+							 extractedData.count = data.data['count'];
+						 }
+						 if(data.data['ngoPublished']){
+							   extractedData.ngoPublished = data.data['ngoPublished'];
+						 }
+             extractedData.error = data.errors;
+           } else {
+             extractedData = data;
+           }
+           return extractedData;
 				});
 		});
 	}

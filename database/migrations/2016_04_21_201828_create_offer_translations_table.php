@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
 class CreateOfferTranslationsTable extends Migration
 {
@@ -20,8 +20,8 @@ class CreateOfferTranslationsTable extends Migration
 
             $table->integer('version')->default(1);
 
-            $table->string('title');
-            $table->text('description');
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
             $table->text('opening_hours')->nullable();
 
             $table->string('locale')->index();
@@ -34,10 +34,10 @@ class CreateOfferTranslationsTable extends Migration
                 ->on('offers')
                 ->onDelete('cascade');
 
-            // $table->foreign('language_code')
-            //           ->references('language')
-            //           ->on('languages')
-            //           ->onDelete('cascade');
+            // $table->foreign('language_id')
+            //     ->references('language')
+            //      ->on('languages')
+            //      ->onDelete('cascade');
         });
     }
 

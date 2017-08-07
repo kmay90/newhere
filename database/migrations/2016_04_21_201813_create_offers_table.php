@@ -19,17 +19,18 @@ class CreateOffersTable extends Migration
 
             $table->integer('ngo_id');
 
-            $table->string('street')->nullable();
-            $table->string('streetnumber')->nullable();
+            $table->text('street')->nullable();
+            $table->string('streetnumber', 500)->nullable();
             $table->string('streetnumberadditional')->nullable();
             $table->string('zip')->nullable();
             $table->string('city')->nullable();
             $table->float('latitude')->nullable();
             $table->float('longitude')->nullable();
+            $table->integer('image_id')->nullable();
 
-            $table->string('phone', 25)->nullable();
-            $table->string('email', 50)->nullable();
-            $table->string('website', 50)->nullable();
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
+            $table->string('website', 500)->nullable();
 
             $table->integer('age_from')->default(0)->nullable();
             $table->integer('age_to')->default(99)->nullable();
@@ -37,8 +38,9 @@ class CreateOffersTable extends Migration
             $table->dateTime('valid_from')->nullable();
             $table->dateTime('valid_until')->nullable();
 
-            $table->boolean('enabled')->default(true);
-            $table->dateTime('deleted')->nullable();
+            $table->boolean('enabled')->default(false);
+
+            $table->softDeletes();
             $table->timestamps();
         });
     }

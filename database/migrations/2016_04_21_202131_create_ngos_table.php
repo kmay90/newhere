@@ -18,19 +18,16 @@ class CreateNgosTable extends Migration
             $table->increments('id');
             $table->string('organisation');
             $table->string('street')->nullable();
+            $table->string('street_number')->nullable();
             $table->string('zip')->nullable();
             $table->string('city')->nullable();
-            $table->string('phone');
-            $table->string('email');
-            $table->string('website');
-
-            $table->text('contact');
-            $table->text('contact_email');
-            $table->text('contact_phone');
-
-            // $table->string('username')->unique();
-            // $table->string('password', 60);
-
+            $table->string('website',500)->nullable();
+            $table->text('contact')->nullable();
+            $table->text('contact_email')->nullable();
+            $table->text('contact_phone')->nullable();
+            $table->boolean('published')->default(false);
+            $table->float('latitude')->nullable();
+            $table->float('longitude')->nullable();
             $table->timestamps();
         });
     }
